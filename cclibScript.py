@@ -3,8 +3,6 @@
 
   This source file is part of the Avogadro project.
 
-  Copyright 2016 Kitware, Inc.
-
   This source code is released under the New BSD License, (the "License").
 
   Unless required by applicable law or agreed to in writing, software
@@ -19,6 +17,7 @@ import argparse
 import json
 import sys
 
+import cclib
 from cclib.io.ccio import ccopen
 from cclib.io.cjsonwriter import CJSON
 
@@ -28,8 +27,8 @@ def getMetaData():
     metaData['inputFormat'] = 'cjson'
     metaData['outputFormat'] = 'cjson'
     metaData['operations'] = ['read']
-    metaData['identifier'] = 'CJSON writer'
-    metaData['name'] = 'CJSON'
+    metaData['identifier'] = 'cclib'
+    metaData['name'] = 'cclib'
     metaData['description'] = "The cclib script provided by the cclib repository is used to " +\
                               "write the CJSON format using the input file provided " +\
                               "to Avogadro2."

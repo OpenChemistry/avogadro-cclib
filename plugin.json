@@ -1,0 +1,11 @@
+{
+  "author": "Sanjeed Schamnad",
+  "version": 1.0,
+  "url": "https://github.com/openchemistry/avogadro-cclib",
+  "name": "avogadro-cclib",
+  "description": "File import scripts to read output files through cclib",
+  "type": "formats",
+  "commands": [
+    { "name": "cclib", "command": "cclibScript.py" }
+  ]
+}
