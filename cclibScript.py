@@ -53,11 +53,33 @@ def read():
     cjson['atoms']['elements'] = {}
     cjson['atoms']['elements']['number'] = data.atomnos.tolist()
 
+    # check for geometry optimization coords or scancoords
+    if hasattr(data, "scancoords"):
+        steps = len(data.scanenergies)
+        energies = []
+        cjson['atoms']['coords']['3dSets'] = []
+        for i in range(steps):
+            coords = data.scancoords[i].flatten().tolist()
+            cjson['atoms']['coords']['3dSets'].append(coords)
+            energies.append(data.scanenergies[i] * EV_TO_J_MOL)
+        # add in the energies
+        cjson.setdefault("properties", {})["energies"] = energies
+
     # Add calculated properties
     if hasattr(data, "scfenergies"):
         if len(data.scfenergies) > 0:
             energy = data.scfenergies[-1] * EV_TO_J_MOL
             cjson.setdefault("properties", {})["totalEnergy"] = energy
+        if len(data.scfenergies) > 1: # optimization!
+            steps = len(data.scfenergies)
+            # first frame defaults to optimized
+            energies = [ data.scfenergies[-1] * EV_TO_J_MOL ]
+            coords = data.atomcoords[-1].flatten().tolist()
+            cjson['atoms']['coords']['3dSets'] = [ coords ]
+            for i in range(steps - 1):
+                coords = data.atomcoords[i].flatten().tolist()
+                cjson['atoms']['coords']['3dSets'].append(coords)
+                energies.append(data.scfenergies[i] * EV_TO_J_MOL)
 
     if hasattr(data, "gbasis"):
         basis = _cclib_to_cjson_basis(data.gbasis)
