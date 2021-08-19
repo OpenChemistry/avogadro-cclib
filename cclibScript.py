@@ -34,6 +34,7 @@ def getMetaData():
                               "to Avogadro2."
     metaData['fileExtensions'] = ['out', 'log', 'adfout', 'g09', '.g03', '.g98', '.fchk']
     metaData['mimeTypes'] = ['']
+    metaData['bond'] = True
     return metaData
 
 
