@@ -21,6 +21,7 @@ from utils import (
 # these are in cclib conversion too
 HARTREE_TO_J_MOL = 2625499.638933033
 EV_TO_J_MOL = 96485.33290025658
+EV_TO_KJ_MOL = EV_TO_J_MOL / 1000.0
 
 def getMetaData():
     metaData = {}
@@ -62,25 +63,32 @@ def read():
         for i in range(steps):
             coords = data.scancoords[i].flatten().tolist()
             cjson['atoms']['coords']['3dSets'].append(coords)
-            energies.append(data.scanenergies[i] * EV_TO_J_MOL)
+            energies.append(data.scanenergies[i] * EV_TO_KJ_MOL)
         # add in the energies
         cjson.setdefault("properties", {})["energies"] = energies
 
     # Add calculated properties
     if hasattr(data, "scfenergies"):
         if len(data.scfenergies) > 0:
-            energy = data.scfenergies[-1] * EV_TO_J_MOL
+            energy = data.scfenergies[-1] * EV_TO_KJ_MOL
             cjson.setdefault("properties", {})["totalEnergy"] = energy
         if len(data.scfenergies) > 1: # optimization!
             steps = len(data.scfenergies)
             # first frame defaults to optimized
-            energies = [ data.scfenergies[-1] * EV_TO_J_MOL ]
+            energies = [ data.scfenergies[-1] * EV_TO_KJ_MOL ]
             coords = data.atomcoords[-1].flatten().tolist()
             cjson['atoms']['coords']['3dSets'] = [ coords ]
             for i in range(steps - 1):
                 coords = data.atomcoords[i].flatten().tolist()
                 cjson['atoms']['coords']['3dSets'].append(coords)
-                energies.append(data.scfenergies[i] * EV_TO_J_MOL)
+                energies.append(data.scfenergies[i] * EV_TO_KJ_MOL)
+            cjson.setdefault("properties", {})["energies"] = energies
+
+    # atomic partial charges
+    if hasattr(data, "atomcharges"):
+        # iterate through the methods and charges
+        for set in data.atomcharges.items():
+            cjson.setdefault('partialCharges',{})[set[0]] = set[1].tolist()
 
     if hasattr(data, "gbasis"):
         basis = _cclib_to_cjson_basis(data.gbasis)
@@ -106,6 +114,14 @@ def read():
             occupations = [2 if i <= homos[0] else 0 for i in range(nmo)]
             cjson.setdefault('orbitals', {})['occupations'] = occupations
 
+    if hasattr(data, 'mosyms'):
+        alpha_syms = data.mosyms[0]
+        if len(data.mosyms) > 0:
+            beta_syms = data.mosyms[1]
+        else:
+            beta_syms = alpha_syms
+        cjson.setdefault('orbitals', {})['symmetries'] = [alpha_syms, beta_syms]
+
     if hasattr(data, "vibfreqs"):
         vibfreqs = list(data.vibfreqs)
         cjson.setdefault("vibrations", {})["frequencies"] = vibfreqs
@@ -123,6 +139,15 @@ def read():
             cjson["vibrations"]["intensities"] = [
                 1 for i in range(len(cjson["vibrations"]["frequencies"]))
             ]
+
+        # check for raman intensities
+        if hasattr(data, "vibramans"):
+            cjson["vibrations"]["ramanIntensities"] = list(data.vibramans)
+
+        # check for symmetries
+        if hasattr(data, "vibsyms"):
+            cjson["vibrations"]["symmetries"] = list(data.vibsyms)
+
         if "modes" not in cjson["vibrations"]:
             #  count of modes ..  seems  redundant, but required
             cjson["vibrations"]["modes"] = [
