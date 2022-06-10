@@ -116,7 +116,7 @@ def read():
 
     if hasattr(data, 'mosyms'):
         alpha_syms = data.mosyms[0]
-        if len(data.mosyms) > 0:
+        if len(data.mosyms) > 1:
             beta_syms = data.mosyms[1]
         else:
             beta_syms = alpha_syms
@@ -130,7 +130,36 @@ def read():
         vibdisps = _cclib_to_cjson_vibdisps(data.vibdisps)
         cjson.setdefault("vibrations", {})["eigenVectors"] = vibdisps
 
-    # Add a placeholder intensities array
+    # electronic spectra
+    if hasattr(data, "etenergies"):
+        # reported as wavenumbers, convert to eV
+        etenergies = list(data.etenergies / 8065.544)
+        if hasattr(data, "etoscs"):
+            etoscs = list(data.etoscs)
+        else:
+            etoscs = [1.0] * len(etenergies)
+        cjson.setdefault("spectra", {})["electronic"] = {
+            "energies": etenergies,
+            "intensity": etoscs,
+        }
+        if hasattr(data, "etrotats"):
+            etrotats = list(data.etrotats)
+            cjson["spectra"]["electronic"]["rotation"] = etrotats
+
+    # nmr spectra
+    if hasattr(data, "nmrtensors"):
+        nmrshifts = []
+        # we want the isotropic tensor, so take the trace
+        # from the "total" tensor
+        for atom in data.nmrtensors:
+            total = data.nmrtensors[atom]["total"]
+            isotropic = (total[0][0] + total[1][1] + total[2][2]) / 3.0
+            nmrshifts.append(isotropic)
+        cjson.setdefault("spectra", {})["nmr"] = {
+            "shifts": nmrshifts,
+        }
+
+    # Add an intensities array
     if "vibrations" in cjson and "frequencies" in cjson["vibrations"]:
         if hasattr(data, "vibirs"):
             cjson["vibrations"]["intensities"] = list(data.vibirs)
