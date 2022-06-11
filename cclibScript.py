@@ -140,7 +140,7 @@ def read():
             etoscs = [1.0] * len(etenergies)
         cjson.setdefault("spectra", {})["electronic"] = {
             "energies": etenergies,
-            "intensity": etoscs,
+            "intensities": etoscs,
         }
         if hasattr(data, "etrotats"):
             etrotats = list(data.etrotats)
@@ -149,7 +149,7 @@ def read():
     # nmr spectra
     if hasattr(data, "nmrtensors"):
         nmrshifts = []
-        # we want the isotropic tensor, so take the trace
+        # we want the isotropic shift, so take the trace
         # from the "total" tensor
         for atom in data.nmrtensors:
             total = data.nmrtensors[atom]["total"]
