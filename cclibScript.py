@@ -88,6 +88,9 @@ def read():
     if hasattr(data, "atomcharges"):
         # iterate through the methods and charges
         for set in data.atomcharges.items():
+            if set.endswith('_sum'):
+                continue # adds hydrogens into the other atoms .. skip
+            
             cjson.setdefault('partialCharges',{})[set[0]] = set[1].tolist()
 
     if hasattr(data, "gbasis"):
