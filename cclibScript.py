@@ -23,19 +23,30 @@ HARTREE_TO_J_MOL = 2625499.638933033
 EV_TO_J_MOL = 96485.33290025658
 EV_TO_KJ_MOL = EV_TO_J_MOL / 1000.0
 
+
 def getMetaData():
     metaData = {}
-    metaData['inputFormat'] = 'cjson'
-    metaData['outputFormat'] = 'cjson'
-    metaData['operations'] = ['read']
-    metaData['identifier'] = 'cclib'
-    metaData['name'] = 'cclib'
-    metaData['description'] = "The cclib script provided by the cclib repository is used to " +\
-                              "write the CJSON format using the input file provided " +\
-                              "to Avogadro2."
-    metaData['fileExtensions'] = ['out', 'log', 'adfout', 'g09', '.g03', '.g98', '.fchk']
-    metaData['mimeTypes'] = ['']
-    metaData['bond'] = True
+    metaData["inputFormat"] = "cjson"
+    metaData["outputFormat"] = "cjson"
+    metaData["operations"] = ["read"]
+    metaData["identifier"] = "cclib"
+    metaData["name"] = "cclib"
+    metaData["description"] = (
+        "The cclib script provided by the cclib repository is used to "
+        + "write the CJSON format using the input file provided "
+        + "to Avogadro2."
+    )
+    metaData["fileExtensions"] = [
+        "out",
+        "log",
+        "adfout",
+        "g09",
+        ".g03",
+        ".g98",
+        ".fchk",
+    ]
+    metaData["mimeTypes"] = [""]
+    metaData["bond"] = True
     return metaData
 
 
@@ -44,25 +55,22 @@ def read():
     log = ccopen(sys.stdin)
     data = log.parse()
 
-    cjson = { 
-        'chemicalJson': 1, # version number
-        'atoms': {}
-    }
-    cjson['atoms']['coords'] = {}
-    cjson['atoms']['coords']['3d'] = data.atomcoords[-1].flatten().tolist()
+    cjson = {"chemicalJson": 1, "atoms": {}}  # version number
+    cjson["atoms"]["coords"] = {}
+    cjson["atoms"]["coords"]["3d"] = data.atomcoords[-1].flatten().tolist()
     # 3dSets
 
-    cjson['atoms']['elements'] = {}
-    cjson['atoms']['elements']['number'] = data.atomnos.tolist()
+    cjson["atoms"]["elements"] = {}
+    cjson["atoms"]["elements"]["number"] = data.atomnos.tolist()
 
     # check for geometry optimization coords or scancoords
     if hasattr(data, "scancoords"):
         steps = len(data.scanenergies)
         energies = []
-        cjson['atoms']['coords']['3dSets'] = []
+        cjson["atoms"]["coords"]["3dSets"] = []
         for i in range(steps):
             coords = data.scancoords[i].flatten().tolist()
-            cjson['atoms']['coords']['3dSets'].append(coords)
+            cjson["atoms"]["coords"]["3dSets"].append(coords)
             energies.append(data.scanenergies[i] * EV_TO_KJ_MOL)
         # add in the energies
         cjson.setdefault("properties", {})["energies"] = energies
@@ -72,15 +80,15 @@ def read():
         if len(data.scfenergies) > 0:
             energy = data.scfenergies[-1] * EV_TO_KJ_MOL
             cjson.setdefault("properties", {})["totalEnergy"] = energy
-        if len(data.scfenergies) > 1: # optimization!
+        if len(data.scfenergies) > 1:  # optimization!
             steps = len(data.scfenergies)
             # first frame defaults to optimized
-            energies = [ data.scfenergies[-1] * EV_TO_KJ_MOL ]
+            energies = [data.scfenergies[-1] * EV_TO_KJ_MOL]
             coords = data.atomcoords[-1].flatten().tolist()
-            cjson['atoms']['coords']['3dSets'] = [ coords ]
+            cjson["atoms"]["coords"]["3dSets"] = [coords]
             for i in range(steps - 1):
                 coords = data.atomcoords[i].flatten().tolist()
-                cjson['atoms']['coords']['3dSets'].append(coords)
+                cjson["atoms"]["coords"]["3dSets"].append(coords)
                 energies.append(data.scfenergies[i] * EV_TO_KJ_MOL)
             cjson.setdefault("properties", {})["energies"] = energies
 
@@ -88,42 +96,42 @@ def read():
     if hasattr(data, "atomcharges"):
         # iterate through the methods and charges
         for set in data.atomcharges.items():
-            if set.endswith('_sum'):
-                continue # adds hydrogens into the other atoms .. skip
-            
-            cjson.setdefault('partialCharges',{})[set[0]] = set[1].tolist()
+            if set.endswith("_sum"):
+                continue  # adds hydrogens into the other atoms .. skip
+
+            cjson.setdefault("partialCharges", {})[set[0]] = set[1].tolist()
 
     if hasattr(data, "gbasis"):
         basis = _cclib_to_cjson_basis(data.gbasis)
         cjson["basisSet"] = basis
 
     # Convert mo coefficients
-    if hasattr(data, 'mocoeffs'):
+    if hasattr(data, "mocoeffs"):
         mocoeffs = _cclib_to_cjson_mocoeffs(data.mocoeffs)
-        cjson.setdefault('orbitals', {})['moCoefficients'] = mocoeffs
+        cjson.setdefault("orbitals", {})["moCoefficients"] = mocoeffs
 
     # Convert mo energies
-    if hasattr(data, 'moenergies'):
+    if hasattr(data, "moenergies"):
         moenergies = list(data.moenergies[-1])
-        cjson.setdefault('orbitals', {})['energies'] = moenergies
+        cjson.setdefault("orbitals", {})["energies"] = moenergies
 
-    if hasattr(data, 'nelectrons'):
-        cjson.setdefault('orbitals', {})['electronCount'] = int(data.nelectrons)
+    if hasattr(data, "nelectrons"):
+        cjson.setdefault("orbitals", {})["electronCount"] = int(data.nelectrons)
 
-    if hasattr(data, 'homos') and hasattr(data, 'nmo'):
+    if hasattr(data, "homos") and hasattr(data, "nmo"):
         homos = data.homos
         nmo = data.nmo
         if len(homos) == 1:
             occupations = [2 if i <= homos[0] else 0 for i in range(nmo)]
-            cjson.setdefault('orbitals', {})['occupations'] = occupations
+            cjson.setdefault("orbitals", {})["occupations"] = occupations
 
-    if hasattr(data, 'mosyms'):
+    if hasattr(data, "mosyms"):
         alpha_syms = data.mosyms[0]
         if len(data.mosyms) > 1:
             beta_syms = data.mosyms[1]
         else:
             beta_syms = alpha_syms
-        cjson.setdefault('orbitals', {})['symmetries'] = [alpha_syms, beta_syms]
+        cjson.setdefault("orbitals", {})["symmetries"] = [alpha_syms, beta_syms]
 
     if hasattr(data, "vibfreqs"):
         vibfreqs = list(data.vibfreqs)
@@ -187,32 +195,34 @@ def read():
             ]
 
     # Convert calculation metadata
-    if hasattr(data, 'metadata'):
+    if hasattr(data, "metadata"):
         metadata = data.metadata
-        if 'basis_set' in metadata:
-            cjson.setdefault('metadata', {})['basisSet'] = metadata['basis_set'].lower()
-        if 'functional' in metadata:
-            cjson.setdefault('metadata', {})['functional'] = metadata['functional'].lower()
-        if 'methods' in metadata and len(metadata['methods']) > 0:
-            cjson.setdefault('metadata', {})['theory'] = metadata['methods'][0].lower()
+        if "basis_set" in metadata:
+            cjson.setdefault("metadata", {})["basisSet"] = metadata["basis_set"].lower()
+        if "functional" in metadata:
+            cjson.setdefault("metadata", {})["functional"] = metadata[
+                "functional"
+            ].lower()
+        if "methods" in metadata and len(metadata["methods"]) > 0:
+            cjson.setdefault("metadata", {})["theory"] = metadata["methods"][0].lower()
 
     return json.dumps(cjson)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser('Read files using cclib')
-    parser.add_argument('--metadata', action='store_true')
-    parser.add_argument('--read', action='store_true')
-    parser.add_argument('--write', action='store_true')
-    parser.add_argument('--display-name', action='store_true')
-    parser.add_argument('--lang', nargs='?', default='en')
+    parser = argparse.ArgumentParser("Read files using cclib")
+    parser.add_argument("--metadata", action="store_true")
+    parser.add_argument("--read", action="store_true")
+    parser.add_argument("--write", action="store_true")
+    parser.add_argument("--display-name", action="store_true")
+    parser.add_argument("--lang", nargs="?", default="en")
     args = vars(parser.parse_args())
 
-    if args['metadata']:
+    if args["metadata"]:
         print(json.dumps(getMetaData()))
-    elif args['display_name']:
-        print(getMetaData()['name'])
-    elif args['read']:
+    elif args["display_name"]:
+        print(getMetaData()["name"])
+    elif args["read"]:
         print(read())
-    elif args['write']:
+    elif args["write"]:
         pass
