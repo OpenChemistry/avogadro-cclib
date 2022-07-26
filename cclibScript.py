@@ -63,6 +63,12 @@ def read():
     cjson["atoms"]["elements"] = {}
     cjson["atoms"]["elements"]["number"] = data.atomnos.tolist()
 
+    if hasattr(data, "charge"):
+        cjson.setdefault("properties", {}))["totalCharge"] = data.charge
+
+    if hasattr(data, "mult"):
+        cjson.setdefault("properties", {}))["totalSpinMultiplicity"] = data.mult
+
     # check for geometry optimization coords or scancoords
     if hasattr(data, "scancoords"):
         steps = len(data.scanenergies)
