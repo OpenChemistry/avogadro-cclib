@@ -64,10 +64,10 @@ def read():
     cjson["atoms"]["elements"]["number"] = data.atomnos.tolist()
 
     if hasattr(data, "charge"):
-        cjson.setdefault("properties", {}))["totalCharge"] = data.charge
+        cjson.setdefault("properties", {})["totalCharge"] = data.charge
 
     if hasattr(data, "mult"):
-        cjson.setdefault("properties", {}))["totalSpinMultiplicity"] = data.mult
+        cjson.setdefault("properties", {})["totalSpinMultiplicity"] = data.mult
 
     # check for geometry optimization coords or scancoords
     if hasattr(data, "scancoords"):
@@ -204,13 +204,17 @@ def read():
     if hasattr(data, "metadata"):
         metadata = data.metadata
         if "basis_set" in metadata:
-            cjson.setdefault("metadata", {})["basisSet"] = metadata["basis_set"].lower()
+            cjson.setdefault("inputParameters", {})["basis"] = metadata[
+                "basis_set"
+            ].lower()
         if "functional" in metadata:
-            cjson.setdefault("metadata", {})["functional"] = metadata[
+            cjson.setdefault("inputParameters", {})["functional"] = metadata[
                 "functional"
             ].lower()
         if "methods" in metadata and len(metadata["methods"]) > 0:
-            cjson.setdefault("metadata", {})["theory"] = metadata["methods"][0].lower()
+            cjson.setdefault("inputParameters", {})["theory"] = metadata["methods"][
+                -1
+            ].lower()
 
     return json.dumps(cjson)
 
