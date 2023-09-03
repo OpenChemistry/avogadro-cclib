@@ -7,6 +7,7 @@
 import argparse
 import json
 import sys
+from io import StringIO 
 
 from cclib.io.ccio import ccopen
 
@@ -41,9 +42,9 @@ def getMetaData():
         "log",
         "adfout",
         "g09",
-        ".g03",
-        ".g98",
-        ".fchk",
+        "g03",
+        "g98",
+        "fchk",
     ]
     metaData["mimeTypes"] = [""]
     metaData["bond"] = True
@@ -52,7 +53,8 @@ def getMetaData():
 
 def read():
     # Pass the standard input to ccopen:
-    log = ccopen(sys.stdin)
+    input = sys.stdin.read()
+    log = ccopen(StringIO(input))
     data = log.parse()
 
     cjson = {"chemicalJson": 1, "atoms": {}}  # version number
@@ -102,8 +104,8 @@ def read():
     if hasattr(data, "atomcharges"):
         # iterate through the methods and charges
         for set in data.atomcharges.items():
-            if set.endswith("_sum"):
-                continue  # adds hydrogens into the other atoms .. skip
+            #if set.endswith("_sum"):
+            #    continue  # adds hydrogens into the other atoms .. skip
 
             cjson.setdefault("partialCharges", {})[set[0]] = set[1].tolist()
 
