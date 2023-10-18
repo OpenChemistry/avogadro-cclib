@@ -9,6 +9,9 @@ import json
 import sys
 from io import StringIO 
 
+import warnings
+warnings.simplefilter("ignore", UserWarning)
+
 from cclib.io.ccio import ccopen
 
 # Code from openchemistry
