@@ -27,3 +27,12 @@ support.read = true
 support.write = false
 output-format = "cjson"
 
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["win-64", "linux-64", "osx-arm64"]
+
+[tool.pixi.pypi-dependencies]
+avogadro-cclib = { path = ".", editable = true }
+
+[tool.pixi.tasks]
