@@ -1,0 +1,4 @@
+# The test corpus is deliberately committed, including the gzipped fixtures.
+# Override any broader "*.gz" rule from a user's global gitignore, which would
+# otherwise leave CI running against an empty corpus.
+!*.gz

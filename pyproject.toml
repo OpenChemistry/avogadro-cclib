@@ -7,12 +7,18 @@ license = "BSD-3-Clause"
 dependencies = ["cclib>=1.8.1,<2"]
 requires-python = ">= 3.11"
 
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
 [project.scripts]
 avogadro-cclib = "avogadro_cclib:main"
 
 [build-system]
 build-backend = "uv_build"
 requires = ["uv_build>=0.10.2,<0.11.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [tool.avogadro]
 minimum-avogadro-version = "1.103"
