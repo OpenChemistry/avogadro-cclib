@@ -1,6 +1,6 @@
 [project]
 name = "avogadro-cclib"
-version = "0.1.0"
+version = "0.2.0"
 description = "Read computational chemistry output files in Avogadro 2 via cclib"
 authors = [{name = "Geoff Hutchison", email = "geoff.hutchison@gmail.com"}]
 license = "BSD-3-Clause"
